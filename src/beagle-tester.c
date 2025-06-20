@@ -485,6 +485,38 @@ void beagle_test(const char *scan_value)
 	beagle_notice("tester", "$Id$");
 #endif
 
+
+    /********************************************/
+    /**  Handle MIKRO001 barcode scan     **/
+    /********************************************/
+    if (strncmp(scan_value, "MIKRO", 5) == 0) {
+        beagle_notice("clickid", "detecting...");
+
+        // Call the C++ program that reads ClickID over I2C
+        r = system("./clickid_detect > /tmp/click_id.txt");
+
+        if (r == 0) {
+            FILE *fp = fopen("/tmp/click_id.txt", "r");
+            if (fp) {
+                char detected_id[64];
+                fgets(detected_id, sizeof(detected_id), fp);
+                fclose(fp);
+
+                // Trim newline
+                detected_id[strcspn(detected_id, "\r\n")] = 0;
+                beagle_notice("found", detected_id);
+
+                // Call beagle_test recursively with detected ClickID
+                beagle_test(detected_id);
+                return;
+            }
+        }
+
+        beagle_notice("clickid", "not found");
+        fail = 1;
+        goto done;
+    }
+
 	/********************************************/
 	/** Handle case test is on a cape          **/
 	/** Use the ID and cape array to call test **/
