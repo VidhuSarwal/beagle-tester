@@ -1,35 +1,43 @@
 prefix := /usr
 CC := gcc
-CXX := g++                         # ← NEW
+CXX := g++
 MAKE := make
 RM := rm
 INSTALL := install
+
 GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
-SRC := $(wildcard src/*.c)
-CPP_SRC := src/clickid_detect.cpp # ← NEW
+
+# Source file lists
+SRC_C := $(wildcard src/*.c)
+CLICK_TESTS := $(wildcard click_tests/*.c)
+CPP_SRC := src/clickid_detect.cpp
+
+# Header files
 INC := $(wildcard include/*.h)
-OBJS := ${patsubst %.c,%.o,${SRC}}
+
+# Compilation flags
 CFLAGS := $(CFLAGS_FOR_BUILD) -O3 -W -Wall -Wwrite-strings -I./include
-CXXFLAGS := -O3 -Wall             # ← NEW
+CXXFLAGS := -O3 -Wall -I./include
 
-all: beagle-tester clickid_detect # ← UPDATED
+# Targets
+all: beagle-tester clickid_detect
 
-beagle-tester: $(SRC) $(INC)
-	$(CC) -DVERSION=\"${GIT_VERSION}\" $(CFLAGS) $(SRC) -o beagle-tester
+beagle-tester: $(SRC_C) $(CLICK_TESTS) $(INC)
+	$(CC) -DVERSION=\"${GIT_VERSION}\" $(CFLAGS) $(SRC_C) $(CLICK_TESTS) -o beagle-tester
 
-clickid_detect: $(CPP_SRC)        # ← NEW
+clickid_detect: $(CPP_SRC)
 	$(CXX) $(CXXFLAGS) $(CPP_SRC) -o clickid_detect
 
 images:
 	$(MAKE) -C images
 
 clean:
-	$(RM) -f beagle-tester clickid_detect # ← UPDATED
+	$(RM) -f beagle-tester clickid_detect
 
 install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 700 beagle-tester $(DESTDIR)$(prefix)/sbin
-	$(INSTALL) -m 700 clickid_detect $(DESTDIR)$(prefix)/sbin  # ← NEW
+	$(INSTALL) -m 700 clickid_detect $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 bb-connect-ap $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 beagle-tester-open.sh $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 beagle-tester-close.sh $(DESTDIR)$(prefix)/sbin
