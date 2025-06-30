@@ -22,6 +22,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "click_dispatch.h"
 #ifdef ENABLE_BLUE
 #include <rc/adc.h>
 #include <rc/bmp.h>
@@ -442,7 +443,7 @@ int main(int argc, char** argv)
 			if (exiting) {
 #endif
 				run = 0;
-				break;	
+				break;
 			} else if (!strcmp(scan_value, SCAN_VALUE_REPEAT)) {
 				// pause 4 seconds and run again
 				sleep(4);
@@ -484,6 +485,58 @@ void beagle_test(const char *scan_value)
 #else
 	beagle_notice("tester", "$Id$");
 #endif
+
+
+    /********************************************/
+    /**  Handle MKB001 barcode scan     **/
+    /********************************************/
+    if (strncmp(scan_value, "MKB001", 6) == 0) {
+        beagle_notice("clickid", "detecting...");
+
+        r = system("./clickid_detect > /tmp/click_id.txt");
+
+        if (r == 0) {
+            FILE *fp = fopen("/tmp/click_id.txt", "r");
+            if (fp) {
+                char detected_id[64];
+                fgets(detected_id, sizeof(detected_id), fp);
+                fclose(fp);
+
+                // add "MKB" prefix to click
+                char full_id[70];
+                snprintf(full_id, sizeof(full_id), "MKB%s", detected_id);
+
+                // Remove any trailing newline
+                full_id[strcspn(full_id, "\r\n")] = 0;
+
+                beagle_notice("found", full_id);
+
+                beagle_test(full_id);  // Recursively call.
+                return;
+            }
+        }
+
+        beagle_notice("clickid", "not found");
+        fail = 1;
+        goto done;
+    }
+
+    /********************************************/
+    /** 2. Handle ClickID-specific test dispatch **/
+    /********************************************/
+    for (int i = 0; i < click_test_table_size; i++) {
+        if (strcmp(scan_value, click_test_table[i].click_id) == 0) {
+            beagle_notice("click", scan_value);
+            int r = click_test_table[i].run_test();
+            if (r == 0) {
+                beagle_notice(scan_value, "PASS");
+            } else {
+                beagle_notice(scan_value, "FAIL");
+                fail = 1;
+            }
+            return;
+        }
+    }
 
 	/********************************************/
 	/** Handle case test is on a cape          **/
@@ -653,7 +706,7 @@ void beagle_test(const char *scan_value)
 		beagle_notice("sensors", r ? "fail" : "pass");
 	}
 #endif
-	
+
 	// If OSD3358-SM-RED
 	if(!strcmp(model, MODEL_OSD3358_BSM_REF)){
 		r = osd3358_sm_ref_design_tests();
@@ -780,7 +833,7 @@ void do_colorbar()
 	for (x = cur_x; x < cur_x+4; x++)
 		for (y = (388*(int)fb_info.var.yres)/480; y < (405*(int)fb_info.var.yres)/480; y++)
 			draw_pixel(&fb_info, x+(int)fb_info.var.xres/2, y, 0xffffff);
-	
+
 	//usleep(4444);
 }
 
@@ -877,7 +930,7 @@ void set_user_leds(int code)
 /********************************************/
 /** Cape tests start here                  **/
 /********************************************/
-		
+
 /* BC0000A2yywwnnnnnnnn */
 int test_comms_cape(const char *scan_value, unsigned id)
 {
@@ -1667,4 +1720,3 @@ int gpio_out_test(const char *name, unsigned pin)
 
 	return(0);
 }
-
