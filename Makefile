@@ -10,7 +10,7 @@ GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 # Source file lists
 SRC_C := $(wildcard src/*.c)
 CLICK_TESTS := $(wildcard click_tests/*.c)
-CPP_SRC := src/clickid_detect.cpp src/hdmi_test.cpp   # <--- added
+CPP_SRC := src/clickid_detect.cpp src/hdmi_test.cpp
 
 # Header files
 INC := $(wildcard include/*.h)
@@ -20,7 +20,7 @@ CFLAGS := $(CFLAGS_FOR_BUILD) -O3 -W -Wall -Wwrite-strings -I./include
 CXXFLAGS := -O3 -Wall -I./include
 
 # Targets
-all: beagle-tester clickid_detect hdmi_test          # <--- added
+all: beagle-tester clickid_detect hdmi_test
 
 beagle-tester: $(SRC_C) $(CLICK_TESTS) $(INC)
 	$(CC) -DVERSION=\"${GIT_VERSION}\" $(CFLAGS) $(SRC_C) $(CLICK_TESTS) -o beagle-tester
@@ -28,20 +28,20 @@ beagle-tester: $(SRC_C) $(CLICK_TESTS) $(INC)
 clickid_detect: src/clickid_detect.cpp
 	$(CXX) $(CXXFLAGS) src/clickid_detect.cpp -o clickid_detect
 
-hdmi_test: src/hdmi_test.cpp                        # <--- new rule
+hdmi_test: src/hdmi_test.cpp
 	$(CXX) $(CXXFLAGS) src/hdmi_test.cpp -o hdmi_test `pkg-config --cflags --libs opencv4`
 
 images:
 	$(MAKE) -C images
 
 clean:
-	$(RM) -f beagle-tester clickid_detect hdmi_test   # <--- added
+	$(RM) -f beagle-tester clickid_detect hdmi_test
 
 install:
 	$(INSTALL) -m 755 -d $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 700 beagle-tester $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 700 clickid_detect $(DESTDIR)$(prefix)/sbin
-	$(INSTALL) -m 700 hdmi_test $(DESTDIR)$(prefix)/sbin     # <--- added
+	$(INSTALL) -m 700 hdmi_test $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 bb-connect-ap $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 beagle-tester-open.sh $(DESTDIR)$(prefix)/sbin
 	$(INSTALL) -m 744 beagle-tester-close.sh $(DESTDIR)$(prefix)/sbin

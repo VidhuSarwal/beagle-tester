@@ -1,4 +1,3 @@
-// File: src/hdmi_test.cpp
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
