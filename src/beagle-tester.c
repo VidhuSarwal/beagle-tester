@@ -686,7 +686,7 @@ void beagle_test(const char *scan_value)
 	r = system(str);
 	beagle_notice("usb dev", r ? "fail" : "pass");
 	// newly added: HDMI Tests
-	const char *model = get_device_model();
+	//const char *model = get_device_model();
 	if (strstr(model, "BeagleBone Black") || strstr(model, "BeagleBoard") ||
     strstr(model, "X15") || strstr(model, "AI")) {
 
