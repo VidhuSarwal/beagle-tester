@@ -494,10 +494,7 @@ void beagle_test(const char *scan_value)
     if (strcmp(scan_value, "HDMITEST") == 0) {
         int r = system("/usr/sbin/hdmi_test");
         beagle_notice("hdmi", r == 0 ? "pass" : "fail");
-        fail = (r != 0);
-        run = 0;
-        memset(scan_value, 0, sizeof(scan_value));
-        continue;
+        exit(r != 0);
     }
 
 
@@ -690,12 +687,12 @@ void beagle_test(const char *scan_value)
 	beagle_notice("usb dev", r ? "fail" : "pass");
 	// newly added: HDMI Tests
 	const char *model = get_device_model();
-    if (strstr(model, "BeagleBone Black") || strstr(model, "BeagleBoard") ||
-        strstr(model, "X15") || strstr(model, "AI")) {
+	if (strstr(model, "BeagleBone Black") || strstr(model, "BeagleBoard") ||
+    strstr(model, "X15") || strstr(model, "AI")) {
 
-        int r = system("/usr/sbin/hdmi_test");
-        beagle_notice("hdmi", r == 0 ? "pass" : "fail");
-        fail |= (r != 0);
+    int r = system("/usr/sbin/hdmi_test");
+    beagle_notice("hdmi", r == 0 ? "pass" : "fail");
+    fail |= (r != 0);
     }
 
 	// if BeagleBoard-xM
