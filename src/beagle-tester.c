@@ -51,6 +51,7 @@ void draw_pixel(struct fb_info *fb_info, int x, int y, unsigned color);
 #define SCAN_VALUE_REPEAT "BURN-IN"
 #define SCAN_VALUE_COLORBAR "COLORBAR"
 #define SCAN_VALUE_STOP "STOP"
+#define MAX_RESULTS 256 //added for struct test_result
 int fail = 0;
 int notice_line = 0;
 int display = 1;
@@ -74,6 +75,15 @@ struct cape
 	const char name[33];
 	int (*test)(const char *scan_value, unsigned id);
 };
+
+struct test_result {
+    char test[64];
+    char status[64];
+    time_t timestamp;
+};
+
+struct test_result test_results[MAX_RESULTS];
+int result_count = 0;
 
 int test_comms_cape(const char *scan_value, unsigned id);
 int test_display18_cape(const char *scan_value, unsigned id);
@@ -783,6 +793,14 @@ done:
 
 void beagle_notice(const char *test, const char *status)
 {
+    //added to store test data in struct.
+    if (result_count < MAX_RESULTS) {
+            strncpy(test_results[result_count].test, test, sizeof(test_results[result_count].test));
+            strncpy(test_results[result_count].status, status, sizeof(test_results[result_count].status));
+            test_results[result_count].timestamp = time(NULL);
+            result_count++;
+        }
+
 	const char *fmt = "%8.8s: %-25.25s";
 	unsigned color = COLOR_TEXT;
 	char str[70];
