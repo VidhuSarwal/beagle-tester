@@ -31,6 +31,7 @@
 #include <rc/time.h>
 #endif
 
+#include <stdlib.h>
 #include "common.h"
 void do_fill_screen(struct fb_info *fb_info, int pattern);
 void draw_pixel(struct fb_info *fb_info, int x, int y, unsigned color);
@@ -486,6 +487,16 @@ void beagle_test(const char *scan_value)
 	beagle_notice("tester", "$Id$");
 #endif
 
+    /********************************************/
+    /**  Handle HDMITEST Condition     **/
+    /********************************************/
+
+    if (strcmp(scan_value, "HDMITEST") == 0) {
+        int r = system("/usr/sbin/hdmi_test");
+        beagle_notice("hdmi", r == 0 ? "pass" : "fail");
+        exit(r != 0);
+    }
+
 
     /********************************************/
     /**  Handle MKB001 barcode scan     **/
@@ -674,6 +685,15 @@ void beagle_test(const char *scan_value)
 	fflush(stderr);
 	r = system(str);
 	beagle_notice("usb dev", r ? "fail" : "pass");
+	// newly added: HDMI Tests
+	//const char *model = get_device_model();
+	if (strstr(model, "BeagleBone Black") || strstr(model, "BeagleBoard") ||
+    strstr(model, "X15") || strstr(model, "AI")) {
+
+    int r = system("/usr/sbin/hdmi_test");
+    beagle_notice("hdmi", r == 0 ? "pass" : "fail");
+    fail |= (r != 0);
+    }
 
 	// if BeagleBoard-xM
 	if(!strcmp(model, MODEL_XM)) {
