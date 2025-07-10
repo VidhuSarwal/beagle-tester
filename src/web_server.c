@@ -35,7 +35,7 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
-        printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.ptr);
+        printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
         fflush(stdout);
 
         struct mg_http_serve_opts opts = {
