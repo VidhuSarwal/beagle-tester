@@ -173,6 +173,7 @@ int main(int argc, char** argv)
 	fflush(stderr);
 
 	start_web_server(test_results, &result_count);
+	fprintf(stderr, "Starting Web Server.\n");
 
 
 	if (!barcode) {
