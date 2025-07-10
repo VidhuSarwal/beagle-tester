@@ -78,12 +78,6 @@ struct cape
 	int (*test)(const char *scan_value, unsigned id);
 };
 
-struct test_result {
-    char test[64];
-    char status[64];
-    time_t timestamp;
-};
-
 struct test_result test_results[MAX_RESULTS];
 int result_count = 0;
 
