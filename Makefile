@@ -9,7 +9,7 @@ WEB_ASSETS := src/web/index.html src/web/style.css src/web/app.js
 GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 
 # Source file lists
-SRC_C := $(wildcard src/*.c)
+SRC_C := $(filter-out src/web_server.c src/mongoose.c, $(wildcard src/*.c))
 CLICK_TESTS := $(wildcard click_tests/*.c)
 CPP_SRC := src/clickid_detect.cpp src/hdmi_test.cpp
 WEB_SERVER_SRC := src/web_server.c src/mongoose.c
