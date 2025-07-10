@@ -4,6 +4,7 @@ CXX := g++
 MAKE := make
 RM := rm
 INSTALL := install
+WEB_ASSETS := src/web/index.html src/web/style.css src/web/app.js
 
 GIT_VERSION := $(shell git describe --abbrev=6 --dirty --always --tags)
 
@@ -53,6 +54,9 @@ install:
 	$(INSTALL) -m 644 techlab-buzz.out $(DESTDIR)/lib/firmware
 	$(INSTALL) -m 644 gamepup-buzz-on-buttons.out $(DESTDIR)/lib/firmware
 	$(MAKE) -C images -s install
+	$(INSTALL) -m 755 -d $(DESTDIR)$(prefix)/share/beagle-tester/web
+	$(INSTALL) -m 644 $(WEB_ASSETS) $(DESTDIR)$(prefix)/share/beagle-tester/web/
+
 
 start: install
 	systemctl restart beagle-tester.service
