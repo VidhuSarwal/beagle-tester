@@ -474,7 +474,7 @@ int main(int argc, char** argv)
         perror("Failed to exec web_server");
         exit(1);
     } else {
-        printf("[DEBUG] Error pid!=0")
+        printf("[DEBUG] Error pid!=0");
     }
 
 	return 0;
