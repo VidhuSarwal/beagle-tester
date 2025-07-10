@@ -96,7 +96,7 @@ int test_gamepup_cape(const char *scan_value, unsigned id);
 int test_techlab_cape(const char *scan_value, unsigned id);
 int test_ppilot_cape(const char *scan_value, unsigned id);
 void install_overlay(const char *scan_value, const char *id_str);
-void write_results_to_file(const char *filename, struct test_result *results, int count)
+void write_results_to_file(const char *filename, struct test_result *results, int count);
 
 /********************************************/
 /** This structure matches the barcode     **/
@@ -439,7 +439,7 @@ int main(int argc, char** argv)
 			if (display) do_fill_screen(&fb_info, 0);
 			beagle_test(scan_value);
 			fprintf(stderr, "Test fails: %d\n", fail);
-			fflush(stderr)
+			fflush(stderr);
 			if (fail > 0) {
 				printf("RESULT: \033[41;30;5m FAIL \033[0m\n");
 			} else {
