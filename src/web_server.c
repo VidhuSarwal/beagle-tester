@@ -32,11 +32,14 @@ char *load_json(const char *filename) {
 }
 
 static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
-    printf("HTTP request received\n");
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
+        printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.ptr);
+        fflush(stdout);
+
         struct mg_http_serve_opts opts = {
+            .root_dir = "web",
             .mime_types = "css=text/css,js=application/javascript,html=text/html",
             .extra_headers = "Cache-Control: no-cache\r\n"
         };
@@ -50,7 +53,7 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
         } else if (mg_match(hm->uri, mg_str("/app.js"), NULL)) {
             mg_http_serve_file(c, hm, "web/app.js", &opts);
         } else {
-            mg_http_reply(c, 404, "", "Not found");
+            mg_http_reply(c, 404, "", "Not found\n");
         }
     }
 }
@@ -70,13 +73,12 @@ int main(int argc, char **argv) {
     mg_mgr_init(&mgr);
     struct mg_connection *c = mg_http_listen(&mgr, "http://0.0.0.0:8000", handle_request, NULL);
     if (c == NULL) {
-        fprintf(stderr, "Failed to start web server\n");
+        fprintf(stderr, "Failed to start web server on port 8000\n");
         free(cached_json);
         return 1;
     }
 
-    printf("Web server running on http://0.0.0.0:8000\n");
-    fflush(stdout);
+    printf("Web server running at http://0.0.0.0:8000\n");
 
     while (running) {
         mg_mgr_poll(&mgr, 1000);
