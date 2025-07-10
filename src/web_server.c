@@ -13,11 +13,14 @@ struct server_context {
 static struct mg_mgr mgr;
 static int running = 1;
 
-// Event handler with correct signature
 static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
         struct server_context *ctx = (struct server_context *) c->fn_data;
+
+        // Debug: print incoming URI
+        printf("[DEBUG] URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
+        fflush(stdout);
 
         struct mg_http_serve_opts opts = {
             .mime_types = "css=text/css,js=application/javascript,html=text/html",
@@ -25,14 +28,25 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
         };
 
         if (mg_match(hm->uri, mg_str("/results.json"), NULL)) {
-            mg_printf(c, "HTTP/1.0 200 OK\r\nContent-Type: application/json\r\n\r\n[");
+            printf("[DEBUG] Matched /results.json\n");
+
+            // Assemble JSON in a local buffer
+            char buffer[4096] = {0};
+            char *p = buffer;
+            p += sprintf(p, "[");
+
             for (int i = 0; i < *(ctx->count); ++i) {
-                mg_printf(c, "{\"test\":\"%s\",\"status\":\"%s\"}%s",
-                          ctx->results[i].test,
-                          ctx->results[i].status,
-                          i < (*(ctx->count) - 1) ? "," : "");
+                p += sprintf(p, "{\"test\":\"%s\",\"status\":\"%s\"}%s",
+                             ctx->results[i].test,
+                             ctx->results[i].status,
+                             i < (*(ctx->count) - 1) ? "," : "");
             }
-            mg_printf(c, "]");
+
+            p += sprintf(p, "]");
+
+            // Send HTTP 200 response with Content-Type
+            mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s", buffer);
+
         } else if (mg_match(hm->uri, mg_str("/"), NULL)) {
             mg_http_serve_file(c, hm, "web/index.html", &opts);
         } else if (mg_match(hm->uri, mg_str("/style.css"), NULL)) {
@@ -44,6 +58,7 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
         }
     }
 }
+
 
 static void *web_server_loop(void *arg) {
     while (running) mg_mgr_poll(&mgr, 1000);
