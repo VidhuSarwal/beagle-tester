@@ -25,6 +25,9 @@
 #include "click_dispatch.h"
 #include <time.h>
 #include "web_server.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #ifdef ENABLE_BLUE
 #include <rc/adc.h>
 #include <rc/bmp.h>
@@ -97,7 +100,7 @@ int test_techlab_cape(const char *scan_value, unsigned id);
 int test_ppilot_cape(const char *scan_value, unsigned id);
 void install_overlay(const char *scan_value, const char *id_str);
 void write_results_to_file(const char *filename, struct test_result *results, int count);
-
+void spawn_web_server_async(const char *json_path, struct test_result *results, int count);
 /********************************************/
 /** This structure matches the barcode     **/
 /** header with the test function and info **/
@@ -440,6 +443,9 @@ int main(int argc, char** argv)
 			beagle_test(scan_value);
 			fprintf(stderr, "Test fails: %d\n", fail);
 			fflush(stderr);
+			write_results_to_file("/tmp/results.json", test_results, result_count);
+			printf("Results written to JSON");
+			spawn_web_server_async("/tmp/results.json", test_results, result_count);
 			if (fail > 0) {
 				printf("RESULT: \033[41;30;5m FAIL \033[0m\n");
 			} else {
@@ -467,15 +473,7 @@ int main(int argc, char** argv)
 	system("/usr/sbin/beagle-tester-close.sh");
 	set_led_trigger("red", "none");
 	set_led_trigger("green", "none");
-	write_results_to_file("/tmp/results.json", test_results, result_count);
-	pid_t pid = fork();
-    if (pid == 0) {
-        execl("./web_server", "./web_server", "/tmp/results.json", NULL);
-        perror("Failed to exec web_server");
-        exit(1);
-    } else {
-        printf("[DEBUG] Error pid!=0");
-    }
+
 
 	return 0;
 }
@@ -1777,4 +1775,26 @@ void write_results_to_file(const char *filename, struct test_result *results, in
     }
     fprintf(fp, "]\n");
     fclose(fp);
+}
+
+void spawn_web_server_async(const char *json_path, struct test_result *results, int count) {
+    write_results_to_file(json_path, results, count);
+
+    if (access(json_path, F_OK) != 0) {
+        fprintf(stderr, "[ERROR] %s not found. Skipping web_server launch.\n", json_path);
+        return;
+    }
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child process
+        execl("/usr/sbin/web_server", "web_server", json_path, NULL);
+        perror("[ERROR] Failed to exec web_server");
+        exit(1);
+    } else if (pid > 0) {
+        // Parent
+        printf("[DEBUG] Launched web_server with PID %d\n", pid);
+    } else {
+        perror("[ERROR] fork() failed");
+    }
 }
