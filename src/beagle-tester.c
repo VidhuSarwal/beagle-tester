@@ -96,6 +96,7 @@ int test_gamepup_cape(const char *scan_value, unsigned id);
 int test_techlab_cape(const char *scan_value, unsigned id);
 int test_ppilot_cape(const char *scan_value, unsigned id);
 void install_overlay(const char *scan_value, const char *id_str);
+void write_results_to_file(const char *filename, struct test_result *results, int count)
 
 /********************************************/
 /** This structure matches the barcode     **/
@@ -165,10 +166,6 @@ int main(int argc, char** argv)
 
 	fprintf(stderr, "Starting beagle-tester.\n");
 	fflush(stderr);
-
-	start_web_server(test_results, &result_count);
-	fprintf(stderr, "Starting Web Server.\n");
-
 
 	if (!barcode) {
 		fprintf(stderr, "ERROR: valid barcode scanner not found.\n");
@@ -442,7 +439,7 @@ int main(int argc, char** argv)
 			if (display) do_fill_screen(&fb_info, 0);
 			beagle_test(scan_value);
 			fprintf(stderr, "Test fails: %d\n", fail);
-			fflush(stderr);
+			fflush(stderr)
 			if (fail > 0) {
 				printf("RESULT: \033[41;30;5m FAIL \033[0m\n");
 			} else {
@@ -470,6 +467,13 @@ int main(int argc, char** argv)
 	system("/usr/sbin/beagle-tester-close.sh");
 	set_led_trigger("red", "none");
 	set_led_trigger("green", "none");
+	write_results_to_file("/tmp/results.json", test_results, result_count);
+	pid_t pid = fork();
+    if (pid == 0) {
+        execl("./web_server", "./web_server", "/tmp/results.json", NULL);
+        perror("Failed to exec web_server");
+        exit(1);
+    }
 
 	return 0;
 }
@@ -1757,4 +1761,18 @@ int gpio_out_test(const char *name, unsigned pin)
 	system(sleep);
 
 	return(0);
+}
+//function to write results to file. FIle is shared with web server.
+void write_results_to_file(const char *filename, struct test_result *results, int count) {
+    FILE *fp = fopen(filename, "w");
+    if (!fp) return;
+
+    fprintf(fp, "[\n");
+    for (int i = 0; i < count; ++i) {
+        fprintf(fp, "  {\"test\": \"%s\", \"status\": \"%s\", \"timestamp\": %ld}%s\n",
+                results[i].test, results[i].status, results[i].timestamp,
+                i < count - 1 ? "," : "");
+    }
+    fprintf(fp, "]\n");
+    fclose(fp);
 }

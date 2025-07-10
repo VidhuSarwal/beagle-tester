@@ -16,4 +16,4 @@ void start_web_server(struct test_result *results, int *count);
 
 void stop_web_server(void);
 
-#endif  // WEB_SERVER_H
+#endif
