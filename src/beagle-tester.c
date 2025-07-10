@@ -23,6 +23,7 @@
  */
 
 #include "click_dispatch.h"
+#include <time.h>
 #ifdef ENABLE_BLUE
 #include <rc/adc.h>
 #include <rc/bmp.h>
