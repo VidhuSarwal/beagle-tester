@@ -32,6 +32,7 @@ char *load_json(const char *filename) {
 }
 
 static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
+    printf("HTTP request received\n");
     if (ev == MG_EV_HTTP_MSG) {
         struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
