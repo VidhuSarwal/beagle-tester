@@ -1,5 +1,5 @@
-#ifndef TEST_RESULT_H
-#define TEST_RESULT_H
+#ifndef WEB_SERVER_H
+#define WEB_SERVER_H
 
 #include <time.h>
 
@@ -11,4 +11,9 @@ struct test_result {
     time_t timestamp;
 };
 
-#endif
+// starting function
+void start_web_server(struct test_result *results, int *count);
+
+void stop_web_server(void);
+
+#endif  // WEB_SERVER_H

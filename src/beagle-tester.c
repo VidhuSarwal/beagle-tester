@@ -24,6 +24,7 @@
 
 #include "click_dispatch.h"
 #include <time.h>
+#include "web_server.h"
 #ifdef ENABLE_BLUE
 #include <rc/adc.h>
 #include <rc/bmp.h>
@@ -170,6 +171,9 @@ int main(int argc, char** argv)
 
 	fprintf(stderr, "Starting beagle-tester.\n");
 	fflush(stderr);
+
+	start_web_server(test_results, &result_count);
+
 
 	if (!barcode) {
 		fprintf(stderr, "ERROR: valid barcode scanner not found.\n");
