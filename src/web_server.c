@@ -39,7 +39,7 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
         fflush(stdout);
 
         struct mg_http_serve_opts opts = {
-            .root_dir = "web",
+            .root_dir = "/usr/local/share/web-server",
             .mime_types = "css=text/css,js=application/javascript,html=text/html",
             .extra_headers = "Cache-Control: no-cache\r\n"
         };
