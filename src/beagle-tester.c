@@ -1778,6 +1778,7 @@ void write_results_to_file(const char *filename, struct test_result *results, in
 }
 
 void spawn_web_server_async(const char *json_path, struct test_result *results, int count) {
+    printf("[DEBUG] Reached Spawn Web Server ");
     write_results_to_file(json_path, results, count);
 
     if (access(json_path, F_OK) != 0) {

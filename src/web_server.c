@@ -59,6 +59,10 @@ static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
 }
 
 int main(int argc, char **argv) {
+    char cwd[1024];
+    getcwd(cwd, sizeof(cwd));
+    printf("[DEBUG] Web server running in: %s\n", cwd);
+
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <results.json>\n", argv[0]);
         return 1;
