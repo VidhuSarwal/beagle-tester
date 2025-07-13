@@ -31,32 +31,26 @@ char *load_json(const char *filename) {
     return data;
 }
 
-static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
-    if (ev == MG_EV_HTTP_MSG) {
-        struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+    static void handle_request(struct mg_connection *c, int ev, void *ev_data) {
+            if (ev == MG_EV_HTTP_MSG) {
+            struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
-        printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
-        fflush(stdout);
+            printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
+            fflush(stdout);
 
-        struct mg_http_serve_opts opts = {
-            .root_dir = "/usr/local/share/web-server",
-            .mime_types = "css=text/css,js=application/javascript,html=text/html",
-            .extra_headers = "Cache-Control: no-cache\r\n"
-        };
-
-        if (mg_match(hm->uri, mg_str("/results.json"), NULL)) {
-            mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s", cached_json);
-        } else if (mg_match(hm->uri, mg_str("/"), NULL)) {
-            mg_http_serve_file(c, hm, "web/index.html", &opts);
-        } else if (mg_match(hm->uri, mg_str("/style.css"), NULL)) {
-            mg_http_serve_file(c, hm, "web/style.css", &opts);
-        } else if (mg_match(hm->uri, mg_str("/app.js"), NULL)) {
-            mg_http_serve_file(c, hm, "web/app.js", &opts);
-        } else {
-            mg_http_reply(c, 404, "", "Not found\n");
+            if (mg_match(hm->uri, mg_str("/results.json"), NULL)) {
+                mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s", cached_json);
+            } else {
+                struct mg_http_serve_opts opts = {
+                    .root_dir = "/usr/share/beagle-tester/web",
+                    .mime_types = "css=text/css,js=application/javascript,html=text/html",
+                    .extra_headers = "Cache-Control: no-cache\r\n"
+                };
+                mg_http_serve_dir(c, hm, &opts);
+            }
         }
     }
-}
+
 
 int main(int argc, char **argv) {
     char cwd[1024];
