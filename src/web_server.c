@@ -35,7 +35,7 @@ char *load_json(const char *filename) {
             if (ev == MG_EV_HTTP_MSG) {
             struct mg_http_message *hm = (struct mg_http_message *) ev_data;
 
-            printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
+            //printf("[DEBUG] Request URI: %.*s\n", (int)hm->uri.len, hm->uri.buf);
             fflush(stdout);
 
             if (mg_match(hm->uri, mg_str("/results.json"), NULL)) {
@@ -55,7 +55,7 @@ char *load_json(const char *filename) {
 int main(int argc, char **argv) {
     char cwd[1024];
     getcwd(cwd, sizeof(cwd));
-    printf("[DEBUG] Web server running in: %s\n", cwd);
+    //printf("[DEBUG] Web server running in: %s\n", cwd);
 
     if (argc < 2) {
         fprintf(stderr, "Usage: %s <results.json>\n", argv[0]);
