@@ -19,4 +19,7 @@ TI_AM335x_BeagleBone_Blue)
 	;;
 esac
 
+# Stop any running web_server
+pkill -f "web_server /tmp/results.json"
+echo "Stopped web_server."
 echo Cleaned up console. Exiting.
