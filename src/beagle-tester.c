@@ -426,7 +426,9 @@ int main(int argc, char** argv)
 		/********************************************/
 		/** Process command-line inputs            **/
 		/********************************************/
-		if(scan_i == 0 && argc > 1) {
+		if(scan_i == 0 && argc > 2) {
+			// this skips argv[0] (program name) and argv[1] (config path)
+			// process remaining arguments as scan values
 			strcpy(scan_value, argv[argc-1]);
 			run = 1;
 			argc--;
