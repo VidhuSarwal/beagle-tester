@@ -34,3 +34,7 @@ int load_config(struct app_config* cfg) {
     strncpy(cfg->mqtt_topic, "beagle/test/results", sizeof(cfg->mqtt_topic));
     return ini_parse(CONFIG_PATH, handler, cfg);
 }
+
+int load_config_path(struct app_config *cfg, const char *path) {
+    return ini_parse(path, handler, cfg);
+}

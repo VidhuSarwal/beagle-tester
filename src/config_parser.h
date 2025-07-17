@@ -14,5 +14,6 @@ struct app_config {
 };
 
 int load_config(struct app_config *cfg);
+int load_config_path(struct app_config *cfg, const char *path); // for custom path
 
 #endif

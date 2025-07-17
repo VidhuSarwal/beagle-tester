@@ -22,6 +22,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "config_parser.h"
 #include "click_dispatch.h"
 #include <time.h>
 #include "web_server.h"
@@ -101,6 +102,8 @@ int test_ppilot_cape(const char *scan_value, unsigned id);
 void install_overlay(const char *scan_value, const char *id_str);
 void write_results_to_file(const char *filename, struct test_result *results, int count);
 void spawn_web_server_async(const char *json_path, struct test_result *results, int count);
+void spawn_mqtt_publisher_async(const char *json_path, struct test_result *results, int count, struct app_config *cfg);
+
 /********************************************/
 /** This structure matches the barcode     **/
 /** header with the test function and info **/
@@ -158,6 +161,17 @@ static void do_stop()
 
 int main(int argc, char** argv)
 {
+    const char *config_path = "/tmp/beagle_tester.conf";  // default path
+
+    if (argc > 1) {
+        config_path = argv[1];  // override if provided
+    }
+    // Load config once
+    struct app_config cfg;
+    if (load_config_path(&cfg, config_path) != 0) {
+        fprintf(stderr, "Warning: Failed to load config file at %s\n", config_path);
+    }
+
 	unsigned short barcode_id[4];
 	int barcode = open("/dev/input/beagle-barcode", O_RDONLY);
 	fd_set rdfs;
@@ -445,7 +459,17 @@ int main(int argc, char** argv)
 			fflush(stderr);
 			write_results_to_file("/tmp/results.json", test_results, result_count);
 			printf("Results written to JSON");
-			spawn_web_server_async("/tmp/results.json", test_results, result_count);
+
+			// for launching web server
+			if (cfg.enable_web) {
+				spawn_web_server_async("/tmp/results.json", test_results, result_count);
+			}
+
+			// for launching mqtt server
+			if (cfg.enable_mqtt) {
+				spawn_mqtt_publisher_async("/tmp/results.json", test_results, result_count, &cfg);
+			}
+
 			if (fail > 0) {
 				printf("RESULT: \033[41;30;5m FAIL \033[0m\n");
 			} else {
@@ -1797,5 +1821,39 @@ void spawn_web_server_async(const char *json_path, struct test_result *results, 
         printf("[DEBUG] Launched web_server with PID %d\n", pid);
     } else {
         perror("[ERROR] fork() failed");
+    }
+}
+
+void spawn_mqtt_publisher_async(const char *json_path, struct test_result *results, int count, struct app_config *cfg) {
+    if (!cfg->enable_mqtt) {
+        printf("[DEBUG] MQTT disabled in config, skipping MQTT \n");
+        return;
+    }
+
+    // Json Verification
+    if (access(json_path, F_OK) != 0) {
+        fprintf(stderr, "[ERROR] %s not found. Skipping MQTT  launch.\n", json_path);
+        return;
+    }
+
+    // MQTT Config verification
+    if (strlen(cfg->mqtt_host) == 0 || strlen(cfg->mqtt_topic) == 0) {
+        fprintf(stderr, "[ERROR] MQTT host or topic not configured. Skipping MQTT publisher.\n");
+        return;
+    }
+
+    printf("[DEBUG] Launching MQTT publisher for %s\n", json_path);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        // child
+        execl("/usr/sbin/mqtt_publisher", "mqtt_publisher", json_path, NULL);
+        perror("[ERROR] Failed to exec mqtt_publisher");
+        exit(1);
+    } else if (pid > 0) {
+        // parenr
+        printf("[DEBUG] Launched mqtt_publisher with PID %d\n", pid);
+    } else {
+        perror("[ERROR] fork() failed for MQTT publisher");
     }
 }
