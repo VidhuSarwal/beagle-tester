@@ -3,3 +3,4 @@ beagle-tester
 
 # ignore logs
 debian/*.log
+.DS_Store
