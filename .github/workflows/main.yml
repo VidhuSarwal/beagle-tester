@@ -20,10 +20,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install cross-compilation dependencies
+    - name: Configure ARMhf Repositories and Install Cross-Compilation Dependencies
       run: |
         sudo dpkg --add-architecture armhf
+
+        # Add ARMhf ports repository for Ubuntu 24.04 (noble)
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/armhf.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/armhf.list
+        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/armhf.list
+
         sudo apt-get update
+
+        # Install cross compilation tools and ARM libraries
         sudo apt-get install -y build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf pkg-config libopencv-dev:armhf libmosquitto-dev:armhf fakeroot
 
     - name: Show cross compiler versions and pkg-config
