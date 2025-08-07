@@ -1,0 +1,5 @@
+config BR2_PACKAGE_BEAGLE_TESTER
+    bool "beagle-tester"
+    help
+      BeagleBone Black tester application including web server,
+      MQTT publisher, tests, and utilities.
