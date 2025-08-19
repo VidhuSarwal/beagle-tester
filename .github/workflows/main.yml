@@ -1,110 +1,48 @@
-name: Build and Package ARM .deb
+name: Build BeagleBone Black Image with Tester
 
 on:
   push:
     branches:
+      - buildroot-flow
       - main
-  pull_request:
-
-env:
-  PREFIX: /usr
-  PACKAGE_NAME: beagle-tester
-  VERSION: 1.0.0
-  ARCH: armhf  # Target architecture for BeagleBone Black
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout Buildroot
       uses: actions/checkout@v4
+      with:
+        
+        repository: 'buildroot/buildroot'
+        ref: '2024.05.2'
+        path: 'buildroot'
 
-    - name: Configure ARMhf Repositories and Install Cross-Compilation Dependencies
+    - name: Checkout beagle-tester
+      uses: actions/checkout@v4
+      with:
+        repository: 'VidhuSarwal/beagle-tester'
+        path: 'buildroot/package/beagle-tester'
+
+    - name: Install Buildroot dependencies
+      run: sudo apt-get update && sudo apt-get install -y build-essential libncurses5-dev cpio
+
+    - name: Configure and Build for BeagleBone Black
+      working-directory: ./buildroot
       run: |
-        sudo dpkg --add-architecture armhf
+        make beaglebone_defconfig
+        
+        echo "BR2_PACKAGE_BEAGLE_TESTER=y" >> .config
+        
+        make olddefconfig
 
-        # Add ARMhf ports repository for Ubuntu 24.04 (noble)
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble main restricted universe multiverse" | sudo tee /etc/apt/sources.list.d/armhf.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/armhf.list
-        echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports noble-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/armhf.list
+        echo "Starting Buildroot make..."
+        make
 
-        sudo apt-get update
-
-        # Install cross compilation tools and ARM libraries
-        sudo apt-get install -y build-essential gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf pkg-config libopencv-dev:armhf libmosquitto-dev:armhf fakeroot
-
-    - name: Show cross compiler versions and pkg-config
-      run: |
-        arm-linux-gnueabihf-gcc --version
-        pkg-config --modversion opencv4
-
-    - name: Build Application for ARM
-      run: |
-        make clean
-        # Override CC and CXX to ARM cross compilers
-        make all CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ \
-          CFLAGS="-O3 -W -Wall -Wwrite-strings -I./include" \
-          CXXFLAGS="-O3 -Wall -I./include" \
-          MOSQUITTO_LIBS="-lmosquitto" WEB_LIBS="-lpthread"
-
-    - name: Create staging directory for Debian package
-      run: |
-        rm -rf package-root
-        mkdir -p package-root/usr/sbin
-        mkdir -p package-root/usr/share/beagle-tester/web
-        mkdir -p package-root/lib/systemd/system
-        mkdir -p package-root/etc/udev/rules.d
-        mkdir -p package-root/lib/firmware
-        mkdir -p package-root/tmp
-
-    - name: Install files into staging directory
-      run: |
-        install -m 700 beagle-tester package-root/usr/sbin/
-        install -m 700 clickid_detect package-root/usr/sbin/
-        install -m 700 hdmi_test package-root/usr/sbin/
-        install -m 700 web_server package-root/usr/sbin/
-        install -m 700 mqtt_publisher package-root/usr/sbin/
-
-        # Optional scripts; ignore errors if missing
-        install -m 744 bb-connect-ap package-root/usr/sbin/ || true
-        install -m 744 beagle-tester-open.sh package-root/usr/sbin/ || true
-        install -m 744 beagle-tester-close.sh package-root/usr/sbin/ || true
-
-        install -m 644 beagle-tester.service package-root/lib/systemd/system/
-        install -m 644 beagle-tester.rules package-root/etc/udev/rules.d/
-
-        install -m 644 techlab-buzz.out package-root/lib/firmware/
-        install -m 644 gamepup-buzz-on-buttons.out package-root/lib/firmware/
-
-        install -m 644 src/web/index.html package-root/usr/share/beagle-tester/web/
-        install -m 644 src/web/style.css package-root/usr/share/beagle-tester/web/
-        install -m 644 src/web/app.js package-root/usr/share/beagle-tester/web/
-
-        make beagle_tester.conf
-        install -m 644 beagle_tester.conf package-root/tmp/beagle_tester.conf
-
-    - name: Create DEBIAN control file
-      run: |
-        mkdir -p package-root/DEBIAN
-        cat > package-root/DEBIAN/control << EOF
-        Package: ${PACKAGE_NAME}
-        Version: ${VERSION}
-        Section: utils
-        Priority: optional
-        Architecture: ${ARCH}
-        Depends: libc6, libmosquitto1, libopencv4, libpthread-stubs0-dev
-        Maintainer: Your Name <you@example.com>
-        Description: Beagle Tester application with web server, MQTT, tests, and utilities
-         Built and packaged with GitHub Actions.
-        EOF
-
-    - name: Build .deb package
-      run: |
-        fakeroot dpkg-deb --build package-root ${PACKAGE_NAME}_${VERSION}_${ARCH}.deb
-
-    - name: Upload .deb artifact
+    - name: Upload Image Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${PACKAGE_NAME}_${VERSION}_${ARCH}.deb
-        path: ${PACKAGE_NAME}_${VERSION}_${ARCH}.deb
+        name: beaglebone-black-image
+        path: buildroot/output/images/sdcard.img
