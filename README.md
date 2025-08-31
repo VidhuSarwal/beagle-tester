@@ -69,6 +69,48 @@ Manuracturer-specific allocations include, but are not limited to:
 ### The final 4 characters should:
 * Be a sequential decimal number. If more than 10,000 boards are manufactured that week, roll over the top digit to an ASCII hex character.
 
+### 1. **mikroBUS ClickID Support**
+- Generic barcode `MKB001` triggers **auto-detection** of Click boards.  
+- Specific barcodes like `MKBRCCLICK` run direct tests.  
+- Example:
+  ```bash
+  sudo ./beagle-tester MKB001
+  sudo ./beagle-tester MKBRCCLICK
+  ```
+
+### 2. **HDMI Output Test**
+- Validates HDMI output using a USB capture device at `/dev/video0`.  
+- Run manually:
+  ```bash
+  sudo beagle-tester HDMITEST
+  sudo beagle-tester HDMITEST -s   # save frame
+  ```
+
+### 3. **Web Interface**
+- View results in browser at:
+  ```
+  http://<beagle-ip>:8000
+  ```
+- Auto-refresh every 2s from `/tmp/results.json`.  
+
+### 4. **MQTT Integration**
+- Publish results to MQTT broker.  
+- Configure via `/tmp/beagle_tester.conf`:  
+  ```ini
+  [services]
+  enable_mqtt = true
+  [broker]
+  host = 127.0.0.1
+  port = 1883
+  topic = beagle/test/results
+  ```
+- Subscribe with:
+  ```bash
+  mosquitto_sub -h 127.0.0.1 -t "beagle/test/results"
+  ```
+
+
+
 # BeagleBone Black
 
 ## Required equipment
